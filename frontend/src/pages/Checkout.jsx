@@ -1,0 +1,5 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { orderService } from '../services/services'
+
+export default function Checkout() { const navigate = useNavigate(); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); async function placeOrder() { setBusy(true); setError(''); try { const { data } = await orderService.create(); navigate(`/orders/${data.id}`, { state: { created: true } }) } catch (err) { setError(err.userMessage || 'The demo order could not be placed.') } finally { setBusy(false) } } return <main className="page-shell"><div className="form-panel"><p className="eyebrow">Demo Checkout</p><h2>Ready to place the order?</h2><p className="lede">This academic demonstration creates a pending order from your cart. No payment is collected and no money is transferred.</p>{error && <div className="alert">{error}</div>}<button className="button" onClick={placeOrder} disabled={busy}>{busy ? 'Creating order...' : 'Place demo order'}</button><Link className="button alt" to="/cart">Back to cart</Link></div></main> }

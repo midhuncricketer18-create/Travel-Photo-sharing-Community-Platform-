@@ -1,0 +1,12 @@
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { cartService, photoService, productService } from '../services/services'
+
+export default function PhotoDetails() {
+  const { photoId } = useParams(); const [photo, setPhoto] = useState(null); const [products, setProducts] = useState([]); const [selected, setSelected] = useState(''); const [message, setMessage] = useState(''); const [error, setError] = useState('')
+  useEffect(() => { Promise.all([photoService.get(photoId), productService.list()]).then(([photoResponse, productResponse]) => { setPhoto(photoResponse.data); const available = productResponse.data.filter((product) => product.photo_id === Number(photoId)); setProducts(available); setSelected(String(available[0]?.id || '')) }).catch((err) => setError(err.userMessage || 'This photograph is unavailable.')) }, [photoId])
+  async function addToCart() { try { await cartService.add({ product_id: Number(selected), quantity: 1 }); setMessage('Added to your cart.') } catch (err) { setError(err.userMessage || 'Could not add this print to your cart.') } }
+  if (error && !photo) return <main className="page-shell"><div className="alert">{error}</div><Link to="/browse">Return to collection</Link></main>
+  if (!photo) return <main className="page-shell"><p className="status">Opening photograph...</p></main>
+  return <main className="page-shell"><Link className="meta" to="/browse">← Back to collection</Link><div className="row g-5 mt-2"><div className="col-lg-7"><img src={photo.image_url} alt={photo.title} style={{ width: '100%', maxHeight: 680, objectFit: 'cover' }} /></div><div className="col-lg-5"><p className="eyebrow">{photo.category || 'Fine art print'}</p><h2>{photo.title}</h2><p className="lede">{photo.description || 'A photographic work available as a carefully made physical print.'}</p>{error && <div className="alert">{error}</div>}{message && <div className="alert" style={{ background: '#dbe5d9', color: '#294c32' }}>{message}</div>}{!products.length ? <p className="status">No print formats are currently available.</p> : <><label>Print format<select value={selected} onChange={(e) => setSelected(e.target.value)}>{products.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.size} · ${product.price} · {product.stock} available</option>)}</select></label><button className="button" onClick={addToCart} disabled={!selected}>Add to cart</button></>}</div></div></main>
+}
