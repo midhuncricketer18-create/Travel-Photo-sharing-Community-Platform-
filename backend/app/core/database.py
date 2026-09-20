@@ -1,25 +1,29 @@
 import os
-from collections.abc import Generator
-from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 
-env_path = Path(__file__).resolve().parents[2] / ".env"
-load_dotenv(dotenv_path=env_path)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise RuntimeError("DATABASE_URL is not set in the backend .env file")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL must be set")
 
-engine = create_engine(database_url, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+engine = create_engine(DATABASE_URL)
+
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+
 Base = declarative_base()
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db():
     db = SessionLocal()
     try:
         yield db
